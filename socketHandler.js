@@ -121,12 +121,14 @@ export default async function handleSocketEvents(io){
         socket.on('getPossibleMoves', async (roomID, piece, position) =>{
             const game = games.get(roomID)  || await Game.findOne({roomID});
             if(game){
-                if(JSON.stringify(game.state.board) !== JSON.stringify(game.state.previewBoard)){
-                    socket.emit('originalBoard', game.state.board);
+                if(game.state.currentMoveIndex !=  game.state.moveList.length - 1){
+                    socket.emit('updateBoard', game.state.board);
                     game.state.previewBoard = game.state.board;
+                    game.state.currentMoveIndex = game.state.moveList.length - 1;
                 }else{
                     let possibleMoves = getPossibleMoves(piece,game.state.board,position,game.state.turn);
-                    io.to(roomID).emit("possibleMoves",possibleMoves);
+                    socket.emit("possibleMoves",possibleMoves);
+                    socket.broadcast.to(roomID).emit("opponentSelectedPiece", position);
                 }
             }
         })
@@ -137,9 +139,11 @@ export default async function handleSocketEvents(io){
             const game = games.get(roomID) || await Game.findOne({roomID});
             const lastMoveTime = await (game.state.lastMoveTime);
             if(game){
-                if(JSON.stringify(game.state.board) !== JSON.stringify(game.state.previewBoard)){
-                    socket.emit('originalBoard', game.state.board);
+                if(game.state.currentMoveIndex !=  game.state.moveList.length - 1){
+                    socket.emit('updateBoard', game.state.board);
                     game.state.previewBoard = game.state.board;
+                    game.state.currentMoveIndex = game.state.moveList.length - 1;
+                    // JSON.stringify(game.state.board) !== JSON.stringify(game.state.previewBoard)
                 }
                 else{
                     if(isvalideMove(game,piece,from,to)){
@@ -148,6 +152,9 @@ export default async function handleSocketEvents(io){
                         game.state.timers[game.state.turn] -= elapsedTime;
                         game.state.turn =  game.state.turn == "white" ? "black" : "white"; // switch the turn if valide move
                         io.to(roomID).emit('moved', game);
+                        socket.broadcast.to(roomID).emit('opponentSelectedPiece', to);
+                        const endtime = Date.now();
+                        console.log("time taken to make a move : " + ( endtime - currentTime));
     
                         games.set(roomID, game);
                         await Game.updateOne({ roomID }, { $set: { 'state': game.state } });
@@ -177,7 +184,7 @@ export default async function handleSocketEvents(io){
                 games.set(roomID, game);
                 await Game.updateOne({ roomID }, { $set: { 'state': game.state } });
 
-                socket.emit('undoMove',game.state.previewBoard);
+                socket.emit('updateBoard',game.state.previewBoard);
                 
             }
         })
@@ -200,7 +207,7 @@ export default async function handleSocketEvents(io){
                 games.set(roomID, game);
                 await Game.updateOne({ roomID }, { $set: { 'state': game.state } });
 
-                socket.emit('redoMove',game.state.previewBoard);
+                socket.emit('updateBoard',game.state.previewBoard);
                 
             }
         })
@@ -209,7 +216,7 @@ export default async function handleSocketEvents(io){
             const game = games.get(roomID) || await Game.findOne({roomID});
             if(game){
                 const initialboard = initialGameState();
-                socket.emit('beginningMove', initialboard);
+                socket.emit('updateBoard', initialboard);
                 game.state.previewBoard = initialboard;
                 game.state.currentMoveIndex = -1; 
             }
@@ -218,7 +225,7 @@ export default async function handleSocketEvents(io){
         socket.on('ending', async ({roomID}) => {
             const game = games.get(roomID) || await Game.findOne({roomID});
             if(game){
-                socket.emit('endingMove', game.state.board);
+                socket.emit('updateBoard', game.state.board);
                 game.state.previewBoard = game.state.board
                 game.state.currentMoveIndex = game.state.moveList.length -1;
             }
