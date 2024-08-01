@@ -10,8 +10,8 @@ import newsRoutes from './routes/newsRoutes.js'
 
 const app = express();
 app.use(cors({
-    origin : "http://localhost:5173"
-    // origin : "https://chessmasteronline.netlify.app"
+    // origin : "http://localhost:5173"
+    origin : "https://chessmasteronline.netlify.app"
 }))
 
 app.use(express.json());
@@ -23,8 +23,8 @@ app.use('/api/news', newsRoutes);
 const server = createServer(app);
 const io = new Server(server, {
     cors:{
-        origin:["http://localhost:5173"],
-        // origin:["https://chessmasteronline.netlify.app"],
+        // origin:["http://localhost:5173"],
+        origin:["https://chessmasteronline.netlify.app"],
     }
 })
 
