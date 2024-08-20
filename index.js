@@ -7,6 +7,7 @@ import handleSocketEvents from './socketHandler.js';
 import connectDB from './database/connectDB.js';
 import { fetchAndStoreNews,scheduleNewsUpdate } from './utilies/fetchAndStoreNews.js';
 import newsRoutes from './routes/newsRoutes.js'
+import userRoutes from './routes/userRoutes.js'
 
 const app = express();
 app.use(cors({
@@ -18,6 +19,7 @@ app.use(express.json());
 
 //routes
 app.use('/api/news', newsRoutes);
+app.use('/api/user',userRoutes);
 
 
 const server = createServer(app);

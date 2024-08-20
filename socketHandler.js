@@ -29,7 +29,7 @@ export default async function handleSocketEvents(io){
                 state: {
                   board: initialGameState(),
                   turn: 'white',
-                  timers: { white: 600000, black: 600000 },
+                  timers: { white: 600000, black: 600000},
                   moveList:[],
                   currentMoveIndex: -1,
                   previewBoard : initialGameState(),
@@ -61,7 +61,7 @@ export default async function handleSocketEvents(io){
             for(let [id,game] of games.entries()){
                 if(game.players.length === 1 && game.isAvailableForRandom){
                     roomID = id;
-                    joinRoomAndPlay(roomID,socket,game);
+                    if(game.players.length == 1 && game.players[0].userID != userID) joinRoomAndPlay(roomID,socket,game);
                     break;
                 }
             }
@@ -82,9 +82,10 @@ export default async function handleSocketEvents(io){
             if(game && game.players.length === 2){
                 socket.emit('roomfull');
             }
-            if(game && game.players.length === 1 && game.roomID == roomID){
+            else if(game && game.players.length === 1 && game.players[0].userID != userID && game.roomID == roomID){
                 joinRoomAndPlay(roomID,socket,game);
             }
+
             if(!game){
                 joinRoomAndWait(roomID,socket,false);  //isAVailableForRandom == false to Mark room as unavailable for random matchmaking
             }

@@ -8,7 +8,7 @@ const fetchAndStoreNews = async () => {
     const GNEWS_API_URL = process.env.GNEWS_API_URL;
     const response = await axios.get(GNEWS_API_URL);
     const newsArticles = response.data.articles;
-    console.log(newsArticles);
+    // console.log(newsArticles);
     newsArticles.forEach(async(article) => {
         const existingArticle = await News.findOne({ url: article.url });
         if(!existingArticle && article.image){
