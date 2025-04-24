@@ -4,6 +4,7 @@ import { columns, initialGameState, rows } from './utilies/constants.js';
 import getPossibleMoves from './utilies/getPossibleMoves.js';
 import isvalideMove from './utilies/isvalideMove.js';
 import findKingPosition from './PiecesMoveHandles/findKingPosition.js';
+import isCheckMate from './utilies/isCheckMate.js';
 
 export default async function handleSocketEvents(io){
     const games = new Map();
@@ -93,8 +94,8 @@ export default async function handleSocketEvents(io){
 
         // handle the browser refresh
         socket.on('joinGame', async ({ roomID, userID }) => {
-            socket.userID = userID;
             const currentTime = Date.now();
+            socket.userID = userID;
             let game = games.get(roomID) || await Game.findOne({ roomID });
             if (game) {
                 const lastMoveTime = await game.state.lastMoveTime;
@@ -110,7 +111,8 @@ export default async function handleSocketEvents(io){
                 game.state.lastMoveTime = currentTime;
 
                 socket.join(roomID);
-                io.to(roomID).emit("UpdateGame", game);
+                // io.to(roomID).emit("UpdateGame", game);
+                socket.emit("UpdateGame", game);
 
                 // update the game
                 games.set(roomID, game);
@@ -129,7 +131,7 @@ export default async function handleSocketEvents(io){
                 }else{
                     let possibleMoves = getPossibleMoves(piece,game.state.board,position,game.state.turn);
                     socket.emit("possibleMoves",possibleMoves);
-                    socket.broadcast.to(roomID).emit("opponentSelectedPiece", position);
+                    socket.to(roomID).emit("opponentSelectedPiece", position);  // send to opponent expect itself
                 }
             }
         })
@@ -144,23 +146,45 @@ export default async function handleSocketEvents(io){
                     socket.emit('updateBoard', game.state.board);
                     game.state.previewBoard = game.state.board;
                     game.state.currentMoveIndex = game.state.moveList.length - 1;
-                    // JSON.stringify(game.state.board) !== JSON.stringify(game.state.previewBoard)
                 }
                 else{
                     if(isvalideMove(game,piece,from,to)){
 
                         const elapsedTime = currentTime - lastMoveTime;
                         game.state.timers[game.state.turn] -= elapsedTime;
+                        const currentPlayer = game.state.turn;
                         game.state.turn =  game.state.turn == "white" ? "black" : "white"; // switch the turn if valide move
                         io.to(roomID).emit('moved', game);
-                        socket.broadcast.to(roomID).emit('opponentSelectedPiece', to);
-                        const endtime = Date.now();
-                        console.log("time taken to make a move : " + ( endtime - currentTime));
+                        socket.to(roomID).emit('opponentSelectedPiece', to);   // send to opponent expect itself
+
+                        if(isCheckMate(game.state.board, game.state.turn)){  
+                            const winner = currentPlayer;
+                            io.to(roomID).emit('checkmate', winner);
+                        }
     
                         games.set(roomID, game);
                         await Game.updateOne({ roomID }, { $set: { 'state': game.state } });
                     }
                     else{
+                        // // update the board i.e, place piece at to position and at from position = ""
+                        // let fromRow = rows.indexOf(from[1]);
+                        // let fromCol = columns.indexOf(from[0]);
+                        // let toRow = rows.indexOf(to[1]);
+                        // let toCol = columns.indexOf(to[0]);
+                        // const board = game.state.board;
+                        // board[toRow][toCol] = piece;
+                        // board[fromRow][fromCol] = "";
+
+                        // const ischeckMate = isCheckMate(board,game.state.turn); 
+                        // if(ischeckMate){
+                        //     game.state.board = board;
+                        //     const winner = game.state.turn === "white" ? "black" : "white"
+                        //     io.to(roomID).emit('checkmate', winner);
+
+                        //     //save the changes
+                        //     games.set(roomID, game);
+                        //     await Game.updateOne({ roomID }, { $set: { 'state': game.state } });
+                        // }
                         const kingPosition = findKingPosition(game.state.board, game.state.turn);     // is inValid Move(i.e, king of current player is in check);
                         socket.emit("check",game,kingPosition);
                     }

@@ -34,7 +34,7 @@ const gameSchema = new mongoose.Schema({
         white:{
             type: Number,
             required:true,
-            default:600000
+            default:600000   // 10 min timer
         },
         black:{
             type: Number,

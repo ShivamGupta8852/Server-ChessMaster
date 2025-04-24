@@ -9,7 +9,7 @@ const isKingInCheck = (board, turn) => {
     // Check if any opponent's piece can attack the king's position
     for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
-            if (board[r][c] !== "" && board[r][c].startsWith(opponentColor) && !board[r][c].endsWith("king")) {
+            if (board[r][c] !== "" && board[r][c].startsWith(opponentColor) && !board[r][c].endsWith("king")) {    // !board[r][c].endsWith("king")  - because a king can't check to opponent king
                 let moves = getPossibleMoves(board[r][c], board, `${columns[c]}${rows[r]}`,opponentColor);
                 if (moves.includes(kingPosition)) {
                     return true;

@@ -1,6 +1,7 @@
 import express from 'express';
 import 'dotenv/config';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import {createServer} from 'http';
 import { Server } from 'socket.io';
 import handleSocketEvents from './socketHandler.js';
@@ -8,25 +9,31 @@ import connectDB from './database/connectDB.js';
 import { fetchAndStoreNews,scheduleNewsUpdate } from './utilies/fetchAndStoreNews.js';
 import newsRoutes from './routes/newsRoutes.js'
 import userRoutes from './routes/userRoutes.js'
+import matchRoutes from './routes/matchRoutes.js';
+import friendRoutes from './routes/friendRoutes.js';
 
 const app = express();
-app.use(cors({
-    // origin : "http://localhost:5173"
-    origin : "https://chessmasteronline.netlify.app"
-}))
 
 app.use(express.json());
+app.use(cors({
+    credentials: true,   // Allow CORS with credentials (for cookies to work across domains)
+    origin : process.env.CLIENT_URL,
+}))
+app.use(cookieParser());
+
 
 //routes
 app.use('/api/news', newsRoutes);
 app.use('/api/user',userRoutes);
+app.use('/api/matches', matchRoutes);
+app.use('/api/friends', friendRoutes);
 
 
 const server = createServer(app);
 const io = new Server(server, {
     cors:{
-        // origin:["http://localhost:5173"],
-        origin:["https://chessmasteronline.netlify.app"],
+        credentials : true,  // Allow CORS with credentials (for cookies to work across domains)
+        origin:process.env.CLIENT_URL,
     }
 })
 

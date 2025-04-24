@@ -14,12 +14,11 @@ const isvalideMove = (game,piece,from,to) => {
     board[toRow][toCol] = piece;
     board[fromRow][fromCol] = "";
 
-    // isKingInCheck(board,turn);
 
     if(isKingInCheck(board,turn)){
         //restore the original board if king is in check and return false to show invalid move
-        board[toRow][toCol] = capturedPiece;
-        board[fromRow][fromCol] = piece;
+        // board[toRow][toCol] = capturedPiece;
+        // board[fromRow][fromCol] = piece;
 
         game.state.board[fromRow][fromCol] = piece;
         game.state.board[toRow][toCol] = capturedPiece;
