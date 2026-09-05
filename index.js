@@ -17,7 +17,7 @@ const app = express();
 app.use(express.json());
 app.use(cors({
     credentials: true,   // Allow CORS with credentials (for cookies to work across domains)
-    origin : process.env.CLIENT_URL,
+    origin : 'https://chessmasteronline.netlify.app',
 }))
 app.use(cookieParser());
 
@@ -33,7 +33,7 @@ const server = createServer(app);
 const io = new Server(server, {
     cors:{
         credentials : true,  // Allow CORS with credentials (for cookies to work across domains)
-        origin:process.env.CLIENT_URL,
+        origin: 'https://chessmasteronline.netlify.app',
     }
 })
 
