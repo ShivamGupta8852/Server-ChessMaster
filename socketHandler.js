@@ -23,7 +23,7 @@ export default async function handleSocketEvents(io){
         console.log(`user connected ${socket.id}`);
 
         // join a room and wait
-        const joinRoomAndWait = async (roomID,socket,isAvailableForRandom) => {
+        const joinRoomAndWait = async (roomID,socket) => {
             const newGame = new Game({
                 roomID,
                 players: [{ userID: socket.userID, role: 'white' }],
@@ -36,7 +36,6 @@ export default async function handleSocketEvents(io){
                   previewBoard : initialGameState(),
                   lastMoveTime: Date.now(),
                 },
-                isAvailableForRandom,
                 createdAt: new Date(),
             })
             games.set(roomID,newGame);
@@ -49,8 +48,12 @@ export default async function handleSocketEvents(io){
         const joinRoomAndPlay = async (roomID,socket,game) => {
             game.players.push({ userID: socket.userID, role: 'black' });
             game.state.lastMoveTime = Date.now() + 3;
+            game.state.isAvailableForRandom = false;
             games.set(roomID, game);
-            await Game.updateOne({ roomID }, {players : game.players});
+            await Game.updateOne(
+                { roomID },
+                { $set : {players : game.players ,isAvailableForRandom: false} }
+            );
             socket.join(roomID);
             io.to(roomID).emit('startGame', roomID);
         }
@@ -60,9 +63,11 @@ export default async function handleSocketEvents(io){
             socket.userID = userID;
             let roomID = null;      // to return roomId of room joined to socket
             for(let [id,game] of games.entries()){
-                if(game.players.length === 1 && game.isAvailableForRandom){
+                if(game.players.length === 1 && game.isAvailableForRandom && game.players[0].userID != userID){
                     roomID = id;
-                    if(game.players.length == 1 && game.players[0].userID != userID) joinRoomAndPlay(roomID,socket,game);
+                    console.log("roomid of 2nd player in random" + roomID);
+                    joinRoomAndPlay(roomID,socket,game);
+                    // if(game.players.length == 1 && game.players[0].userID != userID) joinRoomAndPlay(roomID,socket,game);
                     break;
                 }
             }
@@ -70,7 +75,7 @@ export default async function handleSocketEvents(io){
             // if not single player room found, then create new room with initial states
             if(!roomID){
                 roomID = uuidv4();
-                joinRoomAndWait(roomID,socket,true);
+                joinRoomAndWait(roomID,socket);
             }
             console.log("Play online clicked");
         })

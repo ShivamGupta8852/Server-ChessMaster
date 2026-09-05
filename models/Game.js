@@ -66,6 +66,7 @@ const gameSchema = new mongoose.Schema({
   isAvailableForRandom : {
     type: Boolean,
     required : true,
+    default: true,
   },
   createdAt: {
     type: Date,

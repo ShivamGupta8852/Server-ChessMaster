@@ -12,7 +12,7 @@ const connectDB = async (DATABASE_URL) => {
         console.log("MongoDB connected successfully !!");
     } catch (error) {
         console.log(error);
-        throw new Error("could not coonect to database")
+        throw new Error("Unable to connect to database")
     }
 }
 
